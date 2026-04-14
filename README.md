@@ -1,4 +1,4 @@
-# DWM1001-Dev
+# DWM1001 Development Tool
 
 A Python GUI for the Qorvo DWM1001 UWB module. Scan for and connect to nearby boards over Bluetooth, configure devices as anchors or tags, and stream live position data in real time from a single interface.
 
