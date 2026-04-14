@@ -10,6 +10,7 @@ A Python GUI for the Qorvo DWM1001 UWB module. Scan for and connect to nearby bo
 ## Table of Contents
 
 - [Background](#background)
+- [Screenshots](#screenshots)
 - [Install](#install)
 - [Usage](#usage)
 - [API](#api)
@@ -23,6 +24,16 @@ The DWM1001-DEV module exposes its configuration over BLE but has no official de
 Tkinter and `bleak` (the BLE library) cannot share the same thread: Tkinter blocks the main thread with `root.mainloop()` while bleak requires a dedicated asyncio event loop. Running FastAPI and uvicorn in a background daemon thread isolates the two runtimes cleanly. The GUI talks to the BLE layer exclusively over HTTP on `127.0.0.1:8000`, which also means every BLE operation is testable via Swagger UI without the GUI.
 
 Requires Python 3.10+ and Windows 10/11 (WinRT BLE backend).
+
+## Screenshots
+
+| Scan & Connect | Device Info |
+|:-:|:-:|
+| ![Scan & Connect](screenshots/scan_connect.png) | ![Device Info](screenshots/device_info.png) |
+
+| Configure | Location Stream |
+|:-:|:-:|
+| ![Configure](screenshots/configure.png) | ![Location Stream](screenshots/location_stream.png) |
 
 ## Install
 
@@ -48,7 +59,7 @@ This starts the FastAPI server on `127.0.0.1:8000` and launches the GUI. Four ta
 To run the backend alone and browse the interactive API docs:
 
 ```bash
-uvicorn ble_api:app --reload
+uvicorn ble_service:app --reload
 ```
 
 Then open `http://localhost:8000/docs`.

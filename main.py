@@ -6,7 +6,7 @@ import tkinter as tk
 import requests
 import uvicorn
 
-from gui import DWM1001App
+from interface import DWM1001App
 
 
 def _run_api():
@@ -14,7 +14,7 @@ def _run_api():
     asyncio.run(
         uvicorn.Server(
             uvicorn.Config(
-                "ble_api:app",
+                "ble_service:app",
                 host="127.0.0.1",
                 port=8000,
                 log_level="error",
