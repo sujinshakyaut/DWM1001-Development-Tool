@@ -21,10 +21,7 @@ class DWM1001App:
         self._build_ui()
         self._root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-    # ── UI construction ───────────────────────────────────────────────────────
-
     def _build_ui(self):
-        # Top bar
         top = tk.Frame(self._root, bg="#2b2b2b", pady=6)
         top.pack(fill="x")
         tk.Label(
@@ -38,7 +35,6 @@ class DWM1001App:
         )
         self._status_label.pack(side="right", padx=12)
 
-        # Notebook
         self._nb = ttk.Notebook(self._root)
         self._nb.pack(fill="both", expand=True, padx=8, pady=8)
 
@@ -67,7 +63,6 @@ class DWM1001App:
         scrollbar.config(command=self._device_listbox.yview)
         self._device_listbox.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
-        # Parallel list of addresses — avoids fragile string splitting on device names
         self._device_addresses: list[str] = []
 
         self._scan_status = tk.StringVar(value="")
@@ -98,7 +93,6 @@ class DWM1001App:
         f = ttk.Frame(self._nb, padding=10)
         self._nb.add(f, text="Configure")
 
-        # Network ID
         nf = ttk.LabelFrame(f, text="Network ID", padding=8)
         nf.pack(fill="x", pady=(0, 8))
         ttk.Label(nf, text="PAN ID (hex, e.g. 1A2B):").grid(row=0, column=0, sticky="w")
@@ -106,7 +100,6 @@ class DWM1001App:
         self._pan_entry.grid(row=0, column=1, padx=6, sticky="w")
         ttk.Button(nf, text="Write PAN ID", command=self._do_write_net_id).grid(row=0, column=2, padx=4)
 
-        # Operating Mode
         of = ttk.LabelFrame(f, text="Operating Mode", padding=8)
         of.pack(fill="x", pady=(0, 8))
 
@@ -136,7 +129,6 @@ class DWM1001App:
             row=2, column=0, columnspan=3, sticky="w", pady=(6, 0)
         )
 
-        # Anchor Position
         pf = ttk.LabelFrame(f, text="Anchor Position", padding=8)
         pf.pack(fill="x")
 
@@ -156,12 +148,9 @@ class DWM1001App:
         f = ttk.Frame(self._nb, padding=10)
         self._nb.add(f, text="Location Stream")
 
-        # Position history for the live map (capped at 100 for trail)
         self._pos_history: list[tuple[int, int]] = []
-        # Full data log for CSV export (unbounded, cleared on stream start)
         self._csv_data: list[tuple] = []
 
-        # Controls
         cf = ttk.LabelFrame(f, text="Controls", padding=8)
         cf.pack(fill="x", pady=(0, 8))
         ttk.Label(cf, text="Duration (s):").pack(side="left")
@@ -174,14 +163,12 @@ class DWM1001App:
         ttk.Button(cf, text="Clear Trail", command=self._clear_trail).pack(side="left", padx=4)
         ttk.Button(cf, text="Save CSV", command=self._save_csv).pack(side="left")
 
-        # Live Position Map
         mf = ttk.LabelFrame(f, text="Live Position Map", padding=4)
         mf.pack(fill="x", pady=(0, 8))
         self._map_canvas = tk.Canvas(mf, width=460, height=220,
                                      bg="#1e1e1e", highlightthickness=0)
         self._map_canvas.pack()
 
-        # Current Position (text readout)
         pf = ttk.LabelFrame(f, text="Current Position", padding=8)
         pf.pack(fill="x", pady=(0, 8))
         self._loc_vars = {}
@@ -195,7 +182,6 @@ class DWM1001App:
             )
             self._loc_vars[key] = var
 
-        # Anchor Distances
         af = ttk.LabelFrame(f, text="Anchor Distances", padding=8)
         af.pack(fill="both", expand=True)
         cols = ("Node ID", "Distance (mm)", "Quality")
@@ -207,8 +193,6 @@ class DWM1001App:
         self._anchor_tree.configure(yscrollcommand=tree_scroll.set)
         self._anchor_tree.pack(side="left", fill="both", expand=True)
         tree_scroll.pack(side="right", fill="y")
-
-    # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _submit(self, fn, *args, on_done):
         future = self._executor.submit(fn, *args)
@@ -223,7 +207,6 @@ class DWM1001App:
             self._status_label.config(fg="#ff6b6b")
 
     def _start_status_poll(self):
-        """Poll /status every 3 s to detect unexpected BLE disconnections."""
         def poll():
             self._submit(
                 lambda: requests.get(f"{API}/status", timeout=5),
@@ -238,7 +221,6 @@ class DWM1001App:
                 if connected:
                     self._root.after(3000, poll)
             except Exception:
-                # If the API is unreachable, stop polling silently
                 pass
 
         self._root.after(3000, poll)
@@ -249,8 +231,6 @@ class DWM1001App:
         else:
             self._initiator_var.set(False)
             self._initiator_check.config(state="disabled")
-
-    # ── Scan & Connect tab actions ────────────────────────────────────────────
 
     def _do_scan(self):
         self._scan_status.set("Scanning…")
@@ -320,8 +300,6 @@ class DWM1001App:
 
         self._submit(call, on_done=on_done)
 
-    # ── Device Info tab actions ───────────────────────────────────────────────
-
     def _do_read_info(self):
         def call():
             return requests.get(f"{API}/info", timeout=10)
@@ -346,8 +324,6 @@ class DWM1001App:
                 messagebox.showerror("Read error", str(e))
 
         self._submit(call, on_done=on_done)
-
-    # ── Configure tab actions ─────────────────────────────────────────────────
 
     def _do_write_net_id(self):
         raw = self._pan_entry.get().strip()
@@ -430,8 +406,6 @@ class DWM1001App:
 
         self._submit(call, on_done=on_done)
 
-    # ── Location Stream tab actions ───────────────────────────────────────────
-
     def _do_start_location(self):
         try:
             duration = int(self._duration_spin.get())
@@ -439,7 +413,7 @@ class DWM1001App:
             messagebox.showerror("Invalid input", "Duration must be an integer.")
             return
 
-        self._clear_trail()   # fresh map for each new stream session
+        self._clear_trail()
         self._csv_data.clear()
 
         def call():
@@ -506,7 +480,6 @@ class DWM1001App:
                 self._loc_vars["Y (mm)"].set(str(pos["y"]))
                 self._loc_vars["Z (mm)"].set(str(pos["z"]))
                 self._loc_vars["Quality"].set(str(pos["quality"]))
-                # Append to map trail and CSV log
                 self._pos_history.append((pos["x"], pos["y"]))
                 if len(self._pos_history) > 100:
                     self._pos_history.pop(0)
@@ -526,8 +499,6 @@ class DWM1001App:
                         values=(a["node_id_hex"], a["distance_mm"], a["quality"]),
                     )
 
-    # ── Live map ──────────────────────────────────────────────────────────────
-
     def _clear_trail(self):
         self._pos_history.clear()
         self._map_canvas.delete("all")
@@ -543,7 +514,7 @@ class DWM1001App:
             title="Save position data",
         )
         if not path:
-            return  # user cancelled
+            return
         try:
             with open(path, "w", newline="") as f:
                 writer = csv.writer(f)
@@ -568,9 +539,8 @@ class DWM1001App:
             return
 
         W, H = 460, 220
-        PAD = 36  # pixel margin for axis labels
+        PAD = 36
 
-        # World bounds — always include origin
         xs = [p[0] for p in self._pos_history]
         ys = [p[1] for p in self._pos_history]
         x_min = min(0, min(xs))
@@ -578,11 +548,9 @@ class DWM1001App:
         y_min = min(0, min(ys))
         y_max = max(0, max(ys))
 
-        # Ensure a minimum 1 m view so a stationary tag still shows a canvas
         x_range = max(x_max - x_min, 1000)
         y_range = max(y_max - y_min, 1000)
 
-        # 10 % padding around the data
         xp, yp = x_range * 0.12, y_range * 0.12
         wx0, wx1 = x_min - xp, x_max + xp
         wy0, wy1 = y_min - yp, y_max + yp
@@ -591,9 +559,8 @@ class DWM1001App:
         draw_h = H - PAD
 
         def cx(x): return PAD + (x - wx0) / (wx1 - wx0) * draw_w
-        def cy(y): return H - PAD - (y - wy0) / (wy1 - wy0) * draw_h  # flip Y up
+        def cy(y): return H - PAD - (y - wy0) / (wy1 - wy0) * draw_h
 
-        # ── Grid lines ────────────────────────────────────────────────────────
         step = self._nice_grid_step(max(wx1 - wx0, wy1 - wy0))
         gx_start = math.floor(wx0 / step) * step
         gy_start = math.floor(wy0 / step) * step
@@ -623,29 +590,23 @@ class DWM1001App:
                               fill="#888888", font=("Consolas", 7), anchor="e")
             y += step
 
-        # ── Trail ─────────────────────────────────────────────────────────────
         n = len(self._pos_history)
         for i, (tx, ty) in enumerate(self._pos_history[:-1]):
             px, py = cx(tx), cy(ty)
-            # Fade from dark grey (oldest) to light grey (newest)
             brightness = int(80 + 120 * i / max(n - 1, 1))
             col = f"#{brightness:02x}{brightness:02x}{brightness:02x}"
             r = 2
             c.create_oval(px - r, py - r, px + r, py + r, fill=col, outline="")
 
-        # ── Current position (red diamond) ────────────────────────────────────
         lx, ly = self._pos_history[-1]
         px, py = cx(lx), cy(ly)
-        s = 7  # half-size
+        s = 7
         c.create_polygon(px, py - s, px + s, py, px, py + s, px - s, py,
                          fill="#ff4444", outline="#ff8888", width=1)
 
-        # ── Coordinate overlay ────────────────────────────────────────────────
         overlay = f"X:{lx:,} mm  Y:{ly:,} mm  Q:{quality}"
         c.create_text(W - 4, 4, text=overlay, fill="#aaaaaa",
                       font=("Consolas", 8), anchor="ne")
-
-    # ── Window close ──────────────────────────────────────────────────────────
 
     def _on_close(self):
         def stop_and_disconnect():

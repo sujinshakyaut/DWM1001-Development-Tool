@@ -7,7 +7,6 @@ from bleak.backends.device import BLEDevice
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 
-# ── UUIDs ─────────────────────────────────────────────────────────────────────
 OP_MODE_UUID       = "3f0afd88-7770-46b0-b5e7-9fc099598964"
 NET_ID_UUID        = "80f9d8bc-3bff-45bb-a181-2d6a37991208"
 LABEL_UUID         = "00002a00-0000-1000-8000-00805f9b34fb"
@@ -15,15 +14,12 @@ POSITION_UUID      = "f0f26c9b-2c8c-49ac-ab60-fe03def1b40c"
 LOCATION_UUID      = "003bbdf2-c634-4b3d-ab56-7ec889b89a37"
 LOCATION_MODE_UUID = "a02b947e-df97-4516-996a-1882521e0ead"
 
-# ── Module-level state ────────────────────────────────────────────────────────
 _client: BleakClient | None = None
 _client_address: str = ""
 _location_task: asyncio.Task | None = None
 _location_queue: asyncio.Queue = asyncio.Queue()
-# Cache BLEDevice objects from the last scan so connect() can skip a re-scan
 _scanned_devices: dict[str, BLEDevice] = {}
 
-# ── BLE helper functions (ported verbatim from original main.py) ──────────────
 async def read_label(client: BleakClient) -> str:
     raw = await client.read_gatt_char(LABEL_UUID)
     return raw.decode("utf-8", errors="ignore").strip()
@@ -86,11 +82,8 @@ async def write_opmode(
     try:
         await client.write_gatt_char(OP_MODE_UUID, raw, response=True)
     except Exception:
-        # Device reset after opmode change is expected
         pass
 
-
-# ── Pydantic models ───────────────────────────────────────────────────────────
 
 class ConnectRequest(BaseModel):
     address: str
@@ -158,7 +151,6 @@ class LocationPollResponse(BaseModel):
     streaming: bool
 
 
-# ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(title="DWM1001-BLE API")
 
 
@@ -167,8 +159,6 @@ async def require_client() -> BleakClient:
         raise HTTPException(status_code=409, detail="Not connected to any device")
     return _client
 
-
-# ── Connection endpoints ──────────────────────────────────────────────────────
 
 @app.get("/status", response_model=ConnectResponse)
 async def get_status():
@@ -194,7 +184,6 @@ async def scan_devices():
 
 
 def _on_disconnect(_: BleakClient) -> None:
-    """Called by bleak when the device disconnects unexpectedly."""
     global _client, _client_address
     _client = None
     _client_address = ""
@@ -205,8 +194,6 @@ async def connect_device(body: ConnectRequest):
     global _client, _client_address
     if _client is not None and _client.is_connected:
         await _client.disconnect()
-    # Use the cached BLEDevice from the last scan so bleak doesn't need to
-    # do a second internal scan (find_device_by_address) before connecting.
     ble_target: BLEDevice | str = _scanned_devices.get(body.address, body.address)
     try:
         _client = BleakClient(ble_target, disconnected_callback=_on_disconnect)
@@ -232,8 +219,6 @@ async def disconnect_device():
     return WriteResponse(success=True, message="Disconnected")
 
 
-# ── Read endpoint ─────────────────────────────────────────────────────────────
-
 @app.get("/info", response_model=ReadInfoResponse)
 async def read_info(client: BleakClient = Depends(require_client)):
     label = await read_label(client)
@@ -248,8 +233,6 @@ async def read_info(client: BleakClient = Depends(require_client)):
         pan_id_int=pan_id,
     )
 
-
-# ── Write endpoints ───────────────────────────────────────────────────────────
 
 @app.post("/net-id", response_model=WriteResponse)
 async def set_net_id(body: WriteNetIdRequest, client: BleakClient = Depends(require_client)):
@@ -275,8 +258,6 @@ async def set_anchor_position(
         message=f"Position set: x={body.x} y={body.y} z={body.z} quality={body.quality}",
     )
 
-
-# ── Location streaming ────────────────────────────────────────────────────────
 
 def _parse_location_frame(data: bytes) -> LocationFrame | None:
     if len(data) < 1:
@@ -377,7 +358,6 @@ async def location_stop():
             await _location_task
         except asyncio.CancelledError:
             pass
-        # Try to stop notifications if client is still connected
         if _client is not None and _client.is_connected:
             try:
                 await _client.stop_notify(LOCATION_UUID)
