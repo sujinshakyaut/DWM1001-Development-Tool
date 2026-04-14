@@ -1,6 +1,6 @@
 # DWM1001-Dev
 
-A desktop GUI application for configuring and monitoring Decawave DWM1001-DEV UWB modules over Bluetooth Low Energy.
+A Python GUI for the Qorvo DWM1001 UWB module. Scan for and connect to nearby boards over Bluetooth, configure devices as anchors or tags, and stream live position data in real time from a single interface.
 
 ## Table of Contents
 
