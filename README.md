@@ -1,5 +1,10 @@
 # DWM1001 Development Tool
 
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078d7.svg)](https://www.microsoft.com/windows)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+
 A Python GUI for the Qorvo DWM1001 UWB module. Scan for and connect to nearby boards over Bluetooth, configure devices as anchors or tags, and stream live position data in real time from a single interface.
 
 ## Table of Contents
