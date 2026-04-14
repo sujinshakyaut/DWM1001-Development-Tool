@@ -10,7 +10,6 @@ A Python GUI for the Qorvo DWM1001 UWB module. Scan for and connect to nearby bo
 ## Table of Contents
 
 - [Background](#background)
-- [Screenshots](#screenshots)
 - [Install](#install)
 - [Usage](#usage)
 - [API](#api)
@@ -25,13 +24,7 @@ Tkinter and `bleak` (the BLE library) cannot share the same thread: Tkinter bloc
 
 Requires Python 3.10+ and Windows 10/11 (WinRT BLE backend).
 
-## Screenshots
-
-| Scan & Connect | Device Info |
-|:-:|:-:|
-| ![Scan & Connect](screenshots/scan_connect.png) | ![Device Info](screenshots/device_info.png) |
-
-| Configure | Location Stream |
+| | |
 |:-:|:-:|
 | ![Configure](screenshots/configure.png) | ![Location Stream](screenshots/location_stream.png) |
 
